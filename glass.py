@@ -1,12 +1,8 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import gspread
 import io
-import os
 from datetime import datetime
-from oauth2client.service_account import ServiceAccountCredentials
-
 
 st.set_page_config(page_title="Glass Rejection Dashboard", layout="wide")
 st.markdown("✅ App is running on Streamlit Cloud.")
@@ -32,16 +28,13 @@ st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 st.image("KV-Logo-1.png", width=150)
 st.markdown("</div>", unsafe_allow_html=True)
 
-# === Load Google Sheet ===
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
-client = gspread.authorize(creds)
+# === File Upload ===
+uploaded_file = st.file_uploader("📤 Upload Rejection Excel File", type=["xlsx"])
+if not uploaded_file:
+    st.warning("Please upload the Excel file to begin.")
+    st.stop()
 
-sheet = client.open("Glassline Damage Report").worksheet("AllData")
-data = sheet.get_all_records()
-df = pd.DataFrame(data)
-
-# === Preprocess ===
+df = pd.read_excel(uploaded_file)
 df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
 df["Year"] = df["Date"].dt.year
 df["Month"] = df["Date"].dt.month
@@ -66,7 +59,8 @@ with tab1:
     fig1 = px.line(weekly, x="Week#", y="Qty", markers=True, template="plotly_dark")
     fig1.update_layout(
         xaxis=dict(tickmode="linear", tick0=1, dtick=3, tickvals=list(range(1, 53)), title="Week Number"),
-        shapes=[dict(type="line", x0=w, x1=w, yref="paper", y0=0, y1=1, line=dict(color="cyan", width=2, dash="dot")) for w in [13, 26, 39, 52]]
+        shapes=[dict(type="line", x0=w, x1=w, yref="paper", y0=0, y1=1,
+                     line=dict(color="cyan", width=2, dash="dot")) for w in [13, 26, 39, 52]]
     )
     st.plotly_chart(fig1, use_container_width=True)
 
@@ -117,7 +111,6 @@ with tab1:
             chart.set_title({'name': 'Qty by Reason'})
             chart.set_x_axis({'name': 'Reason'})
             chart.set_y_axis({'name': 'Qty'})
-
             ws.insert_chart('L2', chart)
 
         st.download_button(
@@ -127,54 +120,12 @@ with tab1:
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
 
-# === DATA ENTRY TAB ===
+# === DATA ENTRY TAB (Disabled since we're only uploading) ===
 with tab2:
-    st.title("📝 Add New Rejection Record")
-    with st.form("entry_form", clear_on_submit=True):
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            date = st.date_input("Date", value=datetime.today())
-            size = st.text_input("Size")
-            thickness = st.number_input("Thickness (mm)", step=0.1)
-            type_ = st.text_input("Glass Type")
-        with col2:
-            reason = st.selectbox("Reason", ["Broken", "Defective", "Missing", "Prod Issue", "Production Issue", "Req Vertical Cut", "Scratched", "Wrong Size"])
-            qty = st.number_input("Qty", step=1, min_value=1)
-            vendor = st.text_input("Vendor")
-            so = st.text_input("SO")
-        with col3:
-            dept = st.selectbox("Dept.", ["Patio Doors", "Other"])
-        submitted = st.form_submit_button("Submit Record")
-
-    if submitted:
-        dt = pd.to_datetime(date)
-        new_entry = pd.DataFrame([{
-            "Date": dt.date(),
-            "Size": size,
-            "Thickness (mm)": thickness,
-            "Type": type_,
-            "Reason": reason,
-            "Qty": qty,
-            "Vendor": vendor,
-            "SO": so,
-            "Dept.": dept,
-            "Week#": dt.isocalendar().week,
-            "Month": dt.month,
-            "Year": dt.year,
-            "MonthYear": dt.strftime("%Y-%m"),
-            "MonthYearSort": int(dt.strftime("%Y%m"))
-        }])
-        if os.path.exists("LiveData.xlsx"):
-            existing = pd.read_excel("LiveData.xlsx")
-            combined = pd.concat([existing, new_entry], ignore_index=True)
-        else:
-            combined = new_entry
-        combined.to_excel("LiveData.xlsx", index=False)
-        st.success("✅ Record added successfully to LiveData.xlsx")
+    st.info("📥 Please upload an Excel file on the top. Manual entry is disabled in this version.")
 
 # === DATA TABLE TAB ===
 with tab3:
     st.title("📄 All Rejection Records")
-    df_table = df.copy()
-    df_table = df_table.sort_values(by="Date", ascending=False)
+    df_table = df.sort_values(by="Date", ascending=False)
     st.dataframe(df_table, use_container_width=True, height=600)
