@@ -29,6 +29,9 @@ st.image("KV-Logo-1.png", width=150)
 st.markdown("</div>", unsafe_allow_html=True)
 
 # === File Upload ===
+import os
+current_dir = os.path.dirname(os.path.abspath(__file__))
+file_path = os.path.join(current_dir, "Glassline_Damage_Report.xlsx")
 df=pd.read_excel("Glassline_Damage_Report.xlsx")
 
 
