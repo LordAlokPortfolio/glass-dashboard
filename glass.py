@@ -79,75 +79,53 @@ with tab1:
     else:
         st.warning("No data found for the selected quarter.")
 
-    # Excel Export
-st.markdown("### 📤 Download Excel Report (with charts)")
-if st.button("📥 Generate Excel Report"):
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-        # Sheet 1: Raw data
-        df.to_excel(writer, sheet_name="AllData", index=False)
-        workbook = writer.book
-        chart_sheet = workbook.add_worksheet("DashboardCharts")
+       # Excel Export
+    st.markdown("### 📤 Download Excel Report (with charts)")
+    if st.button("📥 Generate Excel Report"):
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+            # Write full data
+            df.to_excel(writer, sheet_name="AllData", index=False)
+            workbook  = writer.book
+            ws_data = writer.sheets["AllData"]
 
-        # Chart 1: Weekly Rejections
-        weekly = df.groupby("Week#")["Qty"].sum().reset_index()
-        chart_sheet.write_column("A2", weekly["Week#"])
-        chart_sheet.write_column("B2", weekly["Qty"])
-        chart1 = workbook.add_chart({'type': 'line'})
-        chart1.add_series({
-            'name': 'Weekly Rejections',
-            'categories': ['DashboardCharts', 1, 0, len(weekly), 0],
-            'values':     ['DashboardCharts', 1, 1, len(weekly), 1],
-        })
-        chart1.set_title({'name': 'Weekly Rejections'})
-        chart_sheet.insert_chart("D2", chart1)
+            # Create Charts Sheet
+            ws_charts = workbook.add_worksheet("Charts")
 
-        # Chart 2: Rejections by Glass Type
-        type_data = df.groupby("Type")["Qty"].sum().reset_index()
-        chart_sheet.write_column("A20", type_data["Type"])
-        chart_sheet.write_column("B20", type_data["Qty"])
-        chart2 = workbook.add_chart({'type': 'column'})
-        chart2.add_series({
-            'name': 'By Glass Type',
-            'categories': ['DashboardCharts', 19, 0, 19 + len(type_data) - 1, 0],
-            'values':     ['DashboardCharts', 19, 1, 19 + len(type_data) - 1, 1],
-        })
-        chart2.set_title({'name': 'Rejections by Glass Type'})
-        chart_sheet.insert_chart("D20", chart2)
+            # Helper to create chart
+            def create_chart(chart_type, title, category_col, value_col, position):
+                chart = workbook.add_chart({'type': chart_type})
+                chart.add_series({
+                    'name':       title,
+                    'categories': ['AllData', 1, category_col, len(df), category_col],
+                    'values':     ['AllData', 1, value_col, len(df), value_col],
+                })
+                chart.set_title({'name': title})
+                chart.set_style(10)
+                ws_charts.insert_chart(position, chart)
 
-        # Chart 3: Rejections by Reason
-        reason_data = df.groupby("Reason")["Qty"].sum().reset_index()
-        chart_sheet.write_column("A38", reason_data["Reason"])
-        chart_sheet.write_column("B38", reason_data["Qty"])
-        chart3 = workbook.add_chart({'type': 'bar'})
-        chart3.add_series({
-            'name': 'By Reason',
-            'categories': ['DashboardCharts', 37, 0, 37 + len(reason_data) - 1, 0],
-            'values':     ['DashboardCharts', 37, 1, 37 + len(reason_data) - 1, 1],
-        })
-        chart3.set_title({'name': 'Rejections by Reason'})
-        chart_sheet.insert_chart("D38", chart3)
+            # Get column indexes for AllData
+            col_map = {col: i for i, col in enumerate(df.columns)}
 
-        # Chart 4: Rejections by Department
-        dept_data = df.groupby("Dept.")["Qty"].sum().reset_index()
-        chart_sheet.write_column("A56", dept_data["Dept."])
-        chart_sheet.write_column("B56", dept_data["Qty"])
-        chart4 = workbook.add_chart({'type': 'pie'})
-        chart4.add_series({
-            'name': 'By Department',
-            'categories': ['DashboardCharts', 55, 0, 55 + len(dept_data) - 1, 0],
-            'values':     ['DashboardCharts', 55, 1, 55 + len(dept_data) - 1, 1],
-        })
-        chart4.set_title({'name': 'Rejections by Department'})
-        chart_sheet.insert_chart("D56", chart4)
+            # Chart 1: Weekly Rejections
+            df["Week#"] = df["Date"].dt.isocalendar().week
+            create_chart('column', 'Weekly Rejections', col_map["Week#"], col_map["Qty"], "A1")
 
-    st.download_button(
-        label="📥 Download Excel",
-        data=output.getvalue(),
-        file_name="Rejection_Report.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+            # Chart 2: Rejections by Reason
+            create_chart('bar', 'Rejections by Reason', col_map["Reason"], col_map["Qty"], "A20")
 
+            # Chart 3: Rejections by Glass Type
+            create_chart('bar', 'Rejections by Glass Type', col_map["Type"], col_map["Qty"], "A39")
+
+            # Chart 4: Rejections by Department
+            create_chart('pie', 'Rejections by Department', col_map["Dept."], col_map["Qty"], "A58")
+
+        st.download_button(
+            label="📥 Download Excel with Charts",
+            data=output.getvalue(),
+            file_name="Rejection_Report_With_Charts.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
 
 # === DATA ENTRY TAB ===
 with tab2:
