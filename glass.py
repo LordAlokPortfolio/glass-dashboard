@@ -48,7 +48,7 @@ st.markdown("</div>", unsafe_allow_html=True)
 import os
 current_dir = os.path.dirname(os.path.abspath(__file__))
 file_path = os.path.join(current_dir, "Glass_Rejection_Data.xlsx")
-df= pd.read_excel(file_path))
+df= pd.read_excel(file_path)
 df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
 df["Year"] = df["Date"].dt.year
 df["Month"] = df["Date"].dt.month
