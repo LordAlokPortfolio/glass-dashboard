@@ -7,7 +7,6 @@ from datetime import datetime
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
-
 st.set_page_config(page_title="Glass Rejection Dashboard", layout="wide")
 
 # === Logo ===
@@ -15,24 +14,17 @@ st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 st.image("KV-Logo-1.png", width=150)
 st.markdown("</div>", unsafe_allow_html=True)
 
-# === Load Data from Google Sheet ===
+# === Load Google Sheet via st.secrets ===
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-import json
-
-creds_dict = dict(st.secrets["google_service_account"])
-import json
-creds_dict = json.loads(st.secrets["google_service_account"].to_json())
-creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
-
+creds = ServiceAccountCredentials.from_json_keyfile_dict(st.secrets["google_service_account"], scope)
 client = gspread.authorize(creds)
 
 sheet = client.open("Glassline Damage Report").worksheet("AllData")
 data = sheet.get_all_records()
 df = pd.DataFrame(data)
+
 st.success(f"✅ Loaded {len(df)} rows from Google Sheet at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
-
-st.success("📡 Data loaded from Google Sheets ✅")
 
 # === Preprocess ===
 df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
