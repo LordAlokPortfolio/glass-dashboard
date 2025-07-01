@@ -16,9 +16,10 @@ st.markdown("</div>", unsafe_allow_html=True)
 
 # === Load Data from Google Sheet ===
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds_dict = json.loads(st.secrets["google_service_account"].to_json())
+creds_dict = st.secrets["google_service_account"]
 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 client = gspread.authorize(creds)
+
 
 SHEET_ID = "1IoXN2Mk2MyNdp_8F8sT82I61TFuQWTk0"  # from your sheet URL
 sheet = client.open_by_key(SHEET_ID).worksheet("AllData")
