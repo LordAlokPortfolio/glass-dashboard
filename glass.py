@@ -17,7 +17,10 @@ st.markdown("</div>", unsafe_allow_html=True)
 
 # === Load Data from Google Sheet ===
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
+import json
+
+creds_dict = dict(st.secrets["google_service_account"])
+creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 client = gspread.authorize(creds)
 
 sheet = client.open("Glassline Damage Report").worksheet("AllData")
