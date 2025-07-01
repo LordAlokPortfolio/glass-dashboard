@@ -23,6 +23,8 @@ client = gspread.authorize(creds)
 sheet = client.open("Glassline Damage Report").worksheet("AllData")
 data = sheet.get_all_records()
 df = pd.DataFrame(data)
+st.success(f"✅ Loaded {len(df)} rows from Google Sheet at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
 
 st.success("📡 Data loaded from Google Sheets ✅")
 
