@@ -29,10 +29,8 @@ st.image("KV-Logo-1.png", width=150)
 st.markdown("</div>", unsafe_allow_html=True)
 
 # === File Upload ===
-uploaded_file = st.file_uploader("📤 Upload Rejection Excel File", type=["xlsx"])
-if not uploaded_file:
-    st.warning("Please upload the Excel file to begin.")
-    st.stop()
+df=pd.read_excel("Glassline Rejection Data.xlsx" \
+"")
 
 df = pd.read_excel(uploaded_file)
 df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
