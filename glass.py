@@ -24,6 +24,7 @@ sheet = client.open("Glassline Damage Report").worksheet("AllData")
 data = sheet.get_all_records()
 df = pd.DataFrame(data)
 
+st.success("📡 Data loaded from Google Sheets ✅")
 
 # === Preprocess ===
 df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
