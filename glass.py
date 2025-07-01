@@ -6,8 +6,11 @@ from datetime import datetime
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
+import time 
 
 st.set_page_config(page_title="Glass Rejection Dashboard", layout="wide")
+st.experiemntal_rerun()
+time.sleep(300) #refresh every 5 minutes
 
 # === Logo ===
 st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
