@@ -4,6 +4,9 @@ import plotly.express as px
 import io
 import os
 from datetime import datetime
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+
 
 st.set_page_config(page_title="Glass Rejection Dashboard", layout="wide")
 
@@ -12,13 +15,15 @@ st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 st.image("KV-Logo-1.png", width=150)
 st.markdown("</div>", unsafe_allow_html=True)
 
-# === Load Data from Excel File ===
-file_path = "Glassline_Damage_Report.xlsx"
-if not os.path.exists(file_path):
-    st.error(f"❌ File not found: {file_path}")
-    st.stop()
+# === Load Data from Google Sheet ===
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
+client = gspread.authorize(creds)
 
-df = pd.read_excel(file_path)
+sheet = client.open("Glassline Damage Report").worksheet("AllData")
+data = sheet.get_all_records()
+df = pd.DataFrame(data)
+
 
 # === Preprocess ===
 df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
