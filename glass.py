@@ -2,10 +2,10 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import io
-import os
 from datetime import datetime
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+import json
 
 st.set_page_config(page_title="Glass Rejection Dashboard", layout="wide")
 
@@ -14,27 +14,26 @@ st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 st.image("KV-Logo-1.png", width=150)
 st.markdown("</div>", unsafe_allow_html=True)
 
-# === Load Google Sheet via st.secrets ===
+# === Load Data from Google Sheet ===
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_dict(st.secrets["google_service_account"], scope)
+creds_dict = json.loads(st.secrets["google_service_account"].to_json())
+creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 client = gspread.authorize(creds)
 
-sheet = client.open_by_key("1IoXN2Mk2MyNdp_8F8sT82l61TFuQWTk0").worksheet("AllData")
+SHEET_ID = "1IoXN2Mk2MyNdp_8F8sT82I61TFuQWTk0"  # from your sheet URL
+sheet = client.open_by_key(SHEET_ID).worksheet("AllData")
 data = sheet.get_all_records()
 df = pd.DataFrame(data)
 
-st.success(f"✅ Loaded {len(df)} rows from Google Sheet at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-
+st.success(f"✅ Loaded {len(df)} rows from Google Sheets at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
 # === Preprocess ===
 df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
 df["Year"] = df["Date"].dt.year
-df["Month"] = df["Date"].dt.month
 df["Quarter"] = df["Date"].dt.to_period("Q").astype(str)
 df["Week#"] = df["Date"].dt.isocalendar().week
 df["Reason"] = df["Reason"].astype(str)
 df["Type"] = df["Type"].astype(str)
-
 
 tab1, tab2, tab3 = st.tabs(["📊 Dashboard", "📝 Data Entry", "📄 Data Table"])
 
@@ -84,45 +83,37 @@ with tab1:
     else:
         st.warning("No data found for the selected quarter.")
 
-       # Excel Export
+    # === Excel Export with Charts ===
     st.markdown("### 📤 Download Excel Report (with charts)")
     if st.button("📥 Generate Excel Report"):
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
             # Write full data
             df.to_excel(writer, sheet_name="AllData", index=False)
-            workbook  = writer.book
+            workbook = writer.book
             ws_data = writer.sheets["AllData"]
-
-            # Create Charts Sheet
             ws_charts = workbook.add_worksheet("Charts")
 
             # Helper to create chart
             def create_chart(chart_type, title, category_col, value_col, position):
                 chart = workbook.add_chart({'type': chart_type})
                 chart.add_series({
-                    'name':       title,
+                    'name': title,
                     'categories': ['AllData', 1, category_col, len(df), category_col],
-                    'values':     ['AllData', 1, value_col, len(df), value_col],
+                    'values': ['AllData', 1, value_col, len(df), value_col],
                 })
                 chart.set_title({'name': title})
                 chart.set_style(10)
                 ws_charts.insert_chart(position, chart)
 
-            # Get column indexes for AllData
+            # Get column indexes
             col_map = {col: i for i, col in enumerate(df.columns)}
 
-            # Chart 1: Weekly Rejections
+            # Recreate charts from dashboard
             df["Week#"] = df["Date"].dt.isocalendar().week
             create_chart('column', 'Weekly Rejections', col_map["Week#"], col_map["Qty"], "A1")
-
-            # Chart 2: Rejections by Reason
             create_chart('bar', 'Rejections by Reason', col_map["Reason"], col_map["Qty"], "A20")
-
-            # Chart 3: Rejections by Glass Type
             create_chart('bar', 'Rejections by Glass Type', col_map["Type"], col_map["Qty"], "A39")
-
-            # Chart 4: Rejections by Department
             create_chart('pie', 'Rejections by Department', col_map["Dept."], col_map["Qty"], "A58")
 
         st.download_button(
@@ -134,7 +125,7 @@ with tab1:
 
 # === DATA ENTRY TAB ===
 with tab2:
-    st.info("📥 This version does not allow manual entry. Please update the Excel file in your GitHub repo.")
+    st.info("📥 This version does not allow manual entry. Please update the Google Sheet instead.")
 
 # === DATA TABLE TAB ===
 with tab3:
