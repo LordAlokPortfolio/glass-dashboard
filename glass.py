@@ -20,7 +20,10 @@ scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
 import json
 
 creds_dict = dict(st.secrets["google_service_account"])
+import json
+creds_dict = json.loads(st.secrets["google_service_account"].to_json())
 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+
 client = gspread.authorize(creds)
 
 sheet = client.open("Glassline Damage Report").worksheet("AllData")
@@ -37,10 +40,9 @@ df["Year"] = df["Date"].dt.year
 df["Month"] = df["Date"].dt.month
 df["Quarter"] = df["Date"].dt.to_period("Q").astype(str)
 df["Week#"] = df["Date"].dt.isocalendar().week
-df["MonthYear"] = df["Date"].dt.to_period("M").astype(str)
-df["MonthYearSort"] = df["Date"].dt.strftime("%Y%m").astype(int)
 df["Reason"] = df["Reason"].astype(str)
 df["Type"] = df["Type"].astype(str)
+
 
 tab1, tab2, tab3 = st.tabs(["📊 Dashboard", "📝 Data Entry", "📄 Data Table"])
 
