@@ -19,7 +19,7 @@ scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
 creds = ServiceAccountCredentials.from_json_keyfile_dict(st.secrets["google_service_account"], scope)
 client = gspread.authorize(creds)
 
-sheet = client.open("Glassline Damage Report").worksheet("AllData")
+sheet = client.open_by_key("1IoXN2Mk2MyNdp_8F8sT82l61TFuQWTk0").worksheet("AllData")
 data = sheet.get_all_records()
 df = pd.DataFrame(data)
 
