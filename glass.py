@@ -29,10 +29,9 @@ st.image("KV-Logo-1.png", width=150)
 st.markdown("</div>", unsafe_allow_html=True)
 
 # === File Upload ===
-df=pd.read_excel("Glassline Rejection Data.xlsx" \
-"")
+df=pd.read_excel("Glassline_Damage_Report.xlsx")
 
-df = pd.read_excel(uploaded_file)
+
 df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
 df["Year"] = df["Date"].dt.year
 df["Month"] = df["Date"].dt.month
