@@ -37,7 +37,7 @@ else:
     """, unsafe_allow_html=True)
 
 # === Auto-refresh every 5 minutes ===
-st.experimental_rerun()
+st.rerun()
 
 # === Logo at Top ===
 st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
