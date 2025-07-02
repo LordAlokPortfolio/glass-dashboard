@@ -9,7 +9,7 @@ import json
 import time 
 
 st.set_page_config(page_title="Glass Rejection Dashboard", layout="wide")
-st.experiemntal_rerun()
+st.experimental_rerun()
 time.sleep(300) #refresh every 5 minutes
 
 # === Logo ===
