@@ -132,13 +132,17 @@ with tab1:
 
 # === DATA TABLE TAB ===
 with tab2:
-    st.subheader("🟫 Scratched Glass Records")
-    scratch_year = st.radio("Select Year", sorted(df["Year"].unique()), horizontal=True, key="scratch_year")
-    scratched_df = df[(df["Reason"].str.lower() == "scratched") & (df["Year"] == scratch_year)]
-    st.dataframe(scratched_df, use_container_width=True, height=450)
+    tab_data1, tab_data2 = st.tabs(["🟦 Scratched Glass Records", "🟥 Production Issue Records"])
 
-with tab3:
-    st.subheader("🟥 Production Issue Records")
-    prod_year = st.radio("Select Year", sorted(df["Year"].unique()), horizontal=True, key="prod_year")
-    prod_df = df[(df["Reason"].str.lower() == "prod issue") & (df["Year"] == prod_year)]
-    st.dataframe(prod_df, use_container_width=True, height=450)
+    with tab_data1:
+        st.markdown("### 🟦 Scratched Glass Records")
+        year_filter1 = st.radio("Select Year", sorted(df["Year"].unique(), reverse=True), horizontal=True, key="year1")
+        df_scratch = df[(df["Reason"].str.lower() == "scratched") & (df["Year"] == year_filter1)]
+        st.dataframe(df_scratch.sort_values(by="Date", ascending=False), use_container_width=True, height=500)
+
+    with tab_data2:
+        st.markdown("### 🟥 Production Issue Records")
+        year_filter2 = st.radio("Select Year", sorted(df["Year"].unique(), reverse=True), horizontal=True, key="year2")
+        df_prod = df[(df["Reason"].str.lower() == "prod issue") & (df["Year"] == year_filter2)]
+        st.dataframe(df_prod.sort_values(by="Date", ascending=False), use_container_width=True, height=500)
+
