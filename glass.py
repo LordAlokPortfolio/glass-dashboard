@@ -145,4 +145,5 @@ with tab2:
         year_filter2 = st.radio("Select Year", sorted(df["Year"].unique(), reverse=True), horizontal=True, key="year2")
         df_prod = df[(df["Reason"] == "Production Issue")]
         st.write("🟰 Rows matched for 'production issue':", len(df[df["Reason"] == "production issue"]))
+        st.write(df[df["Reason"] == "production issue"][["Date", "Year"]].head(10))
         st.dataframe(df_prod.sort_values(by="Date", ascending=False), use_container_width=True, height=500)
