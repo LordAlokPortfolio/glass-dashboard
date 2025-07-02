@@ -38,7 +38,7 @@ df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
 df["Year"] = df["Date"].dt.year
 df["Quarter"] = df["Date"].dt.to_period("Q").astype(str)
 df["Week#"] = df["Date"].dt.isocalendar().week
-df["Reason"] = df["Reason"].astype(str).str.strip().str.lower()
+df["Reason"] = df["Reason"].astype(str)
 df["Type"] = df["Type"].astype(str)
 
 tab1, tab2 = st.tabs(["📊 Dashboard", "📄 Data Table"])
@@ -143,7 +143,5 @@ with tab2:
     with tab_data2:
         st.markdown("### 🔧 Production Issue Records")
         year_filter2 = st.radio("Select Year", sorted(df["Year"].unique(), reverse=True), horizontal=True, key="year2")
-        df_prod = df[(df["Reason"] == "Production Issue")]
-        st.write("🟰 Rows matched for 'production issue':", len(df[df["Reason"] == "production issue"]))
-        st.write(df[df["Reason"] == "production issue"][["Date", "Year"]].head(10))
-        st.dataframe(df_prod.sort_values(by="Date", ascending=False), use_container_width=True, height=500)
+        df_prod = df[(df["Reason"] == "production issue")]
+               st.dataframe(df_prod.sort_values(by="Date", ascending=False), use_container_width=True, height=500)
