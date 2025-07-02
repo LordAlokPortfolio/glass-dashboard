@@ -143,5 +143,5 @@ with tab2:
     with tab_data2:
         st.markdown("### 🔧 Production Issue Records")
         year_filter2 = st.radio("Select Year", sorted(df["Year"].unique(), reverse=True), horizontal=True, key="year2")
-        df_prod = df[(df["Reason"].str.lower() == "Prod Issue") & (df["Year"] == year_filter2)]
+        df_prod = df[(df["Reason"].str.lower() == "Production Issue") & (df["Year"] == year_filter2)]
         st.dataframe(df_prod.sort_values(by="Date", ascending=False), use_container_width=True, height=500)
