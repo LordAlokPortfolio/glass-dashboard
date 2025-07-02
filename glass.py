@@ -9,8 +9,10 @@ import json
 import time 
 
 st.set_page_config(page_title="Glass Rejection Dashboard", layout="wide")
-st.experimental_rerun()
-time.sleep(300) #refresh every 5 minutes
+from streamlit_autorefresh import st_autorefresh
+
+# Automatically rerun every 5 minutes (300000 ms)
+st_autorefresh(interval=300000, key="auto_refresh")
 
 # === Logo ===
 st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
