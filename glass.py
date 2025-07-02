@@ -39,7 +39,7 @@ df["Week#"] = df["Date"].dt.isocalendar().week
 df["Reason"] = df["Reason"].astype(str)
 df["Type"] = df["Type"].astype(str)
 
-tab1, tab2, tab3 = st.tabs(["📊 Dashboard", "📝 Data Entry", "📄 Data Table"])
+tab1, tab2 = st.tabs(["📊 Dashboard", "📄 Data Table"])
 
 # === DASHBOARD TAB ===
 with tab1:
@@ -127,12 +127,9 @@ with tab1:
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
 
-# === DATA ENTRY TAB ===
-with tab2:
-    st.info("📥 This version does not allow manual entry. Please update the Google Sheet instead.")
 
 # === DATA TABLE TAB ===
-with tab3:
+with tab2:
     st.title("📄 All Rejection Records")
     df_table = df.sort_values(by="Date", ascending=False)
     st.dataframe(df_table, use_container_width=True, height=600)
