@@ -141,7 +141,8 @@ with tab2:
         st.dataframe(df_scratch.sort_values(by="Date", ascending=False), use_container_width=True, height=500)
 
     with tab_data2:
-        st.markdown("### 🔧 Production Issue Records")
-        year_filter2 = st.radio("Select Year", sorted(df["Year"].unique(), reverse=True), horizontal=True, key="year2")
-        df_prod = df[(df["Reason"] == "production issue")]
-        st.dataframe(df_prod.sort_values(by="Date", ascending=False), use_container_width=True, height=500)
+    st.markdown("### 🟥 Production Issue Records")
+    year_filter2 = st.radio("Select Year", sorted(df['Year'].unique(), reverse=True), horizontal=True, key="year2")
+    df_prod = df[(df["Reason"] == "production issue") & (df["Year"] == year_filter2)]
+
+    st.dataframe(df_prod.sort_values(by="Date", ascending=False), use_container_width=True, height=500)
