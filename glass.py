@@ -132,18 +132,16 @@ with tab1:
 
 # === DATA TABLE TAB ===
 with tab2:
-    st.title("📄 All Rejection Records")
+    tab_data1, tab_data2 = st.tabs(["🟦 Scratched Glass Records", "🟥 Production Issue Records"])
 
-    subtab1, subtab2 = st.tabs(["🟠 Scratched Glass", "🔧 Production Issue Glass"])
+    with tab_data1:
+        st.markdown("### 🟦 Scratched Glass Records")
+        year_filter1 = st.selectbox("Filter by Year", sorted(df["Year"].unique(), reverse=True), key="year1")
+        df_scratch = df[(df["Reason"].str.lower() == "scratched") & (df["Year"] == year_filter1)]
+        st.dataframe(df_scratch.sort_values(by="Date", ascending=False), use_container_width=True, height=500)
 
-    # Subtab 1: Scratched Glass
-    with subtab1:
-        st.subheader("🟠 Scratched Glass Records")
-        df_scratched = df[df["Reason"].str.lower() == "scratched"]
-        st.dataframe(df_scratched.sort_values(by="Date", ascending=False), use_container_width=True, height=500)
-
-    # Subtab 2: Production Issue
-    with subtab2:
-        st.subheader("🔧 Production Issue Records")
-        df_production = df[df["Reason"].str.lower() == "production issue"]
-        st.dataframe(df_production.sort_values(by="Date", ascending=False), use_container_width=True, height=500)
+    with tab_data2:
+        st.markdown("### 🟥 Production Issue Records")
+        year_filter2 = st.selectbox("Filter by Year", sorted(df["Year"].unique(), reverse=True), key="year2")
+        df_prod = df[(df["Reason"].str.lower() == "prod issue") & (df["Year"] == year_filter2)]
+        st.dataframe(df_prod.sort_values(by="Date", ascending=False), use_container_width=True, height=500)
