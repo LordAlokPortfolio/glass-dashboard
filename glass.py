@@ -135,13 +135,13 @@ with tab2:
     tab_data1, tab_data2 = st.tabs(["🟦 Scratched Glass Records", "🟥 Production Issue Records"])
 
     with tab_data1:
-        st.markdown("### 🟦 Scratched Glass Records")
+        st.markdown("### 🟠 Scratched Glass Records")
         year_filter1 = st.radio("Select Year", sorted(df["Year"].unique(), reverse=True), horizontal=True, key="year1")
         df_scratch = df[(df["Reason"].str.lower() == "scratched") & (df["Year"] == year_filter1)]
         st.dataframe(df_scratch.sort_values(by="Date", ascending=False), use_container_width=True, height=500)
 
     with tab_data2:
-        st.markdown("### 🟥 Production Issue Records")
+        st.markdown("### 🔧 Production Issue Records")
         year_filter2 = st.radio("Select Year", sorted(df["Year"].unique(), reverse=True), horizontal=True, key="year2")
         df_prod = df[(df["Reason"].str.lower() == "prod issue") & (df["Year"] == year_filter2)]
         st.dataframe(df_prod.sort_values(by="Date", ascending=False), use_container_width=True, height=500)
