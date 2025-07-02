@@ -133,5 +133,17 @@ with tab1:
 # === DATA TABLE TAB ===
 with tab2:
     st.title("📄 All Rejection Records")
-    df_table = df.sort_values(by="Date", ascending=False)
-    st.dataframe(df_table, use_container_width=True, height=600)
+
+    subtab1, subtab2 = st.tabs(["🟠 Scratched Glass", "🔧 Production Issue Glass"])
+
+    # Subtab 1: Scratched Glass
+    with subtab1:
+        st.subheader("🟠 Scratched Glass Records")
+        df_scratched = df[df["Reason"].str.lower() == "scratched"]
+        st.dataframe(df_scratched.sort_values(by="Date", ascending=False), use_container_width=True, height=500)
+
+    # Subtab 2: Production Issue
+    with subtab2:
+        st.subheader("🔧 Production Issue Records")
+        df_production = df[df["Reason"].str.lower() == "production issue"]
+        st.dataframe(df_production.sort_values(by="Date", ascending=False), use_container_width=True, height=500)
