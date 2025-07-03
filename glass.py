@@ -154,7 +154,7 @@ with tab4:
     date = st.date_input("Date")
     size = st.text_input("Size")
     thickness = st.number_input("Thickness (mm)", step=0.1)
-    glass_type = st.selectbox("Type", ["Clear", "Lowe", "Tempered", "Tinted"])
+    glass_type = st.selectbox("Type", ["Clear", "Lowe", "i89", "Acid Etch","Lowe366","Hammered","1/2 Reed","6331","Pinhead","Niagara","Lowe Shape","Gray","MATT","Rain"])
     reason = st.selectbox("Reason", ["Scratched", "Missing", "Broken", "Production Issue", "Other"])
     qty = st.number_input("Qty", step=1, min_value=1)
     vendor = st.selectbox("Vendor", ["Cardinal", "Woodbridge", "Other"])
