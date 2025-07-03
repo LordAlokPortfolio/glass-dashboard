@@ -153,13 +153,14 @@ with tab4:
 
     date = st.date_input("Date")
     size = st.text_input("Size")
-    thickness = st.number_input("Thickness (mm)", step=0.1)
-    glass_type = st.selectbox("Type", ["Clear", "Lowe", "i89", "Acid Etch","Lowe366","Hammered","1/2 Reed","6331","Pinhead","Niagara","Lowe Shape","Gray","MATT","Rain"])
-    reason = st.selectbox("Reason", ["Scratched", "Missing", "Broken", "Production Issue", "Other"])
+
+    thickness = st.radio("Thickness (mm)", ["3", "4", "5", "6", "Other"])
+    glass_type = st.radio("Glass Type", ["Clear", "Lowe", "Tempered", "Tinted"])
+    reason = st.radio("Reason", ["Broken", "Missing", "Defective", "Production Issue", "Scratched", "Wrong Size", "Other"])
     qty = st.number_input("Qty", step=1, min_value=1)
-    vendor = st.selectbox("Vendor", ["Cardinal", "Woodbridge", "Other"])
+    vendor = st.radio("Vendor", ["Cardinal", "Woodbridge"])
     so = st.text_input("SO")
-    dept = st.selectbox("Dept.", ["Patio Doors", "Other"])
+    dept = st.radio("Department", ["Patio Doors", "Other"])
 
     # Auto fields
     month = date.strftime("%B")
@@ -167,7 +168,20 @@ with tab4:
     week = date.isocalendar().week
 
     if st.button("Submit Entry"):
-        new_row = [week, date.strftime("%Y-%m-%d"), month, year, size, thickness, glass_type, reason, qty, vendor, so, dept]
+        new_row = [
+            str(week),                         # Week# as text to avoid 26-Jan-00
+            date.strftime("%Y-%m-%d"),         # Proper date format
+            month,                             # Already string
+            str(year),                         # Year as string
+            size,
+            str(thickness),                    # Thickness (radio input, but still safe as string)
+            glass_type,
+            reason,
+            str(qty),                          # Qty as string to avoid Excel formatting
+            vendor,
+            so,
+            dept
+        ]
 
         try:
             # Append to Google Sheet
@@ -202,4 +216,6 @@ with tab4:
             st.success("✅ Submitted and emailed successfully!")
         except Exception as e:
             st.error(f"❌ Submission failed: {e}")
+
+
 
