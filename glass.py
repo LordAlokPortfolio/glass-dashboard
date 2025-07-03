@@ -6,12 +6,12 @@ from datetime import datetime
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
-import time 
-
-st.set_page_config(page_title="Glass Rejection Dashboard", layout="wide")
+import time
 from streamlit_autorefresh import st_autorefresh
 
-# Automatically rerun every 5 minutes (300000 ms)
+st.set_page_config(page_title="Glass Rejection Dashboard", layout="wide")
+
+# Automatically rerun every 5 minutes
 st_autorefresh(interval=300000, key="auto_refresh")
 
 # === Logo ===
@@ -25,8 +25,7 @@ creds_dict = st.secrets["google_service_account"]
 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 client = gspread.authorize(creds)
 
-
-SHEET_ID = "1nYqbCDifAqllvVvNksw0xMD2BIlo3nwCKeCLN-hAgL0"  # from your sheet URL
+SHEET_ID = "1nYqbCDifAqllvVvNksw0xMD2BIlo3nwCKeCLN-hAgL0"
 sheet = client.open_by_key(SHEET_ID).worksheet("AllData")
 data = sheet.get_all_records()
 df = pd.DataFrame(data)
@@ -41,7 +40,7 @@ df["Week#"] = df["Date"].dt.isocalendar().week
 df["Reason"] = df["Reason"].astype(str)
 df["Type"] = df["Type"].astype(str)
 
-tab1, tab2, tab3, tab4 = st.tabs(["📊 Dashboard", "📄 Data Table", "🔍 Issue Records", "📝 New Entry Form"])
+tab1, tab2, tab3 = st.tabs(["📊 Dashboard", "📄 Data Table", "📝 New Entry Form"])
 
 # === DASHBOARD TAB ===
 with tab1:
@@ -94,13 +93,11 @@ with tab1:
     if st.button("📥 Generate Excel Report"):
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-            # Write full data
             df.to_excel(writer, sheet_name="AllData", index=False)
             workbook = writer.book
             ws_data = writer.sheets["AllData"]
             ws_charts = workbook.add_worksheet("Charts")
 
-            # Helper to create chart
             def create_chart(chart_type, title, category_col, value_col, position):
                 chart = workbook.add_chart({'type': chart_type})
                 chart.add_series({
@@ -112,10 +109,7 @@ with tab1:
                 chart.set_style(10)
                 ws_charts.insert_chart(position, chart)
 
-            # Get column indexes
             col_map = {col: i for i, col in enumerate(df.columns)}
-
-            # Recreate charts from dashboard
             df["Week#"] = df["Date"].dt.isocalendar().week
             create_chart('column', 'Weekly Rejections', col_map["Week#"], col_map["Qty"], "A1")
             create_chart('bar', 'Rejections by Reason', col_map["Reason"], col_map["Qty"], "A20")
@@ -129,26 +123,14 @@ with tab1:
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
 
-
 # === DATA TABLE TAB ===
 with tab2:
-    tab_data1, tab_data2 = st.tabs(["🟦 Scratched Glass Records", "🟥 Production Issue Records"])
+    st.title("📄 All Rejection Records")
+    df_table = df.sort_values(by="Date", ascending=False)
+    st.dataframe(df_table, use_container_width=True, height=600)
 
-    with tab_data1:
-        st.markdown("### 🟠 Scratched Glass Records")
-        year_filter1 = st.radio("Select Year", sorted(df["Year"].unique(), reverse=True), horizontal=True, key="year1")
-        df_scratch = df[(df["Reason"].str.lower() == "scratched") & (df["Year"] == year_filter1)]
-        st.dataframe(df_scratch.sort_values(by="Date", ascending=False), use_container_width=True, height=500)
-
-    with tab_data2:
-        st.markdown("### 🟥 Production Issue Records")
-        year_filter2 = st.radio("Select Year", sorted(df['Year'].unique(), reverse=True), horizontal=True, key="year2")
-        df_prod = df[(df["Reason"] == "production issue") & (df["Year"] == year_filter2)]
-
-        st.dataframe(df_prod.sort_values(by="Date", ascending=False), use_container_width=True, height=500)
-
-        # === NEW ENTRY FORM TAB ===
-with tab4:
+# === NEW ENTRY FORM TAB ===
+with tab3:
     st.title("📝 New Glass Rejection Entry")
 
     date = st.date_input("Date")
@@ -161,11 +143,10 @@ with tab4:
     so = st.text_input("SO")
     dept = st.radio("Department", ["Patio Door", "Other"], horizontal=True)
 
-    # Auto fields
     month = date.strftime("%B")
     year = date.year
-    week = float(date.isocalendar().week)  # 27.0
-    formatted_date = date.strftime("%d-%m-%y")  # e.g. 03-07-25
+    week = float(date.isocalendar().week)
+    formatted_date = date.strftime("%d-%m-%y")
 
     if st.button("Submit Entry"):
         new_row = [
@@ -184,10 +165,8 @@ with tab4:
         ]
 
         try:
-            # Append to Google Sheet
             sheet.append_row(new_row)
 
-            # Send email
             import smtplib
             from email.mime.multipart import MIMEMultipart
             from email.mime.text import MIMEText
