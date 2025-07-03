@@ -11,39 +11,54 @@ from streamlit_autorefresh import st_autorefresh
 
 st.set_page_config(page_title="Glass Rejection Dashboard", layout="wide")
 
-# === Hide menu + add Print button ===
+# === Hide Streamlit default controls ===
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    button[title="View app source"] {display: none;}
-    button[title="Open app menu"] {display: none;}
-    </style>
-""", unsafe_allow_html=True)
-
-st.markdown("""
-    <style>
-    /* Hide menu + GitHub + pencil */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-
-    /* Hide menu and GitHub link */
     button[title="View app source"] {display: none !important;}
     button[title="Open app menu"] {display: none !important;}
+    button[title="Share this app"] {display: none !important;}
     a[href*="github.com"] {display: none !important;}
-
-    /* Hide pencil/edit icon */
+    svg[data-testid="icon-pencil"] {display: none !important;}
     [data-testid="stActionButtonIcon"] svg[data-testid="icon-pencil"] {
         display: none !important;
     }
     </style>
 """, unsafe_allow_html=True)
 
+# === Print and Share Buttons ===
+st.markdown("""
+    <div style='text-align: right; margin-top: -40px; margin-bottom: 10px; display: flex; justify-content: flex-end; gap: 10px;'>
 
+        <button onclick="window.print()" style="
+            padding:6px 14px;
+            font-size: 14px;
+            background-color:#f63366;
+            color:white;
+            border:none;
+            border-radius:6px;
+            cursor:pointer;">
+            🖨️ Print This Page
+        </button>
 
+        <button onclick="navigator.clipboard.writeText(window.location.href); alert('🔗 Page link copied!');" style="
+            padding:6px 14px;
+            font-size: 14px;
+            background-color:#1f77b4;
+            color:white;
+            border:none;
+            border-radius:6px;
+            cursor:pointer;">
+            🔗 Share This Page
+        </button>
 
-# Automatically rerun every 5 minutes
+    </div>
+""", unsafe_allow_html=True)
+
+# === Auto Refresh Every 5 Minutes ===
 st_autorefresh(interval=300000, key="auto_refresh")
+
 
 # === Logo ===
 st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
