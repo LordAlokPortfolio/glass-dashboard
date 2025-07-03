@@ -47,8 +47,7 @@ st.markdown("""
             border:none;
             border-radius:6px;
             cursor:pointer;">🔗 Share This Page</button>
-    </div>
-""", unsafe_allow_html=True)
+    </div> """, unsafe_allow_html=True)
 
 # === Auto Refresh ===
 st_autorefresh(interval=300000, key="auto_refresh")
