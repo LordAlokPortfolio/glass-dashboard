@@ -5,22 +5,22 @@ import io
 from datetime import datetime
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-import json
-import time
 from streamlit_autorefresh import st_autorefresh
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 st.set_page_config(page_title="Glass Rejection Dashboard", layout="wide")
 
 # === Hide Streamlit default controls ===
 st.markdown("""
     <style>
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    button[title="View app source"] {display: none !important;}
-    button[title="Open app menu"] {display: none !important;}
-    button[title="Share this app"] {display: none !important;}
-    a[href*="github.com"] {display: none !important;}
-    svg[data-testid="icon-pencil"] {display: none !important;}
+    #MainMenu, footer {visibility: hidden;}
+    button[title="View app source"],
+    button[title="Open app menu"],
+    button[title="Share this app"],
+    a[href*="github.com"],
+    svg[data-testid="icon-pencil"],
     [data-testid="stActionButtonIcon"] svg[data-testid="icon-pencil"] {
         display: none !important;
     }
@@ -30,7 +30,6 @@ st.markdown("""
 # === Print and Share Buttons ===
 st.markdown("""
     <div style='text-align: right; margin-top: -40px; margin-bottom: 10px; display: flex; justify-content: flex-end; gap: 10px;'>
-
         <button onclick="window.print()" style="
             padding:6px 14px;
             font-size: 14px;
@@ -38,9 +37,7 @@ st.markdown("""
             color:white;
             border:none;
             border-radius:6px;
-            cursor:pointer;">
-            🖨️ Print This Page
-        </button>
+            cursor:pointer;">🖨️ Print This Page</button>
 
         <button onclick="navigator.clipboard.writeText(window.location.href); alert('🔗 Page link copied!');" style="
             padding:6px 14px;
@@ -49,17 +46,12 @@ st.markdown("""
             color:white;
             border:none;
             border-radius:6px;
-            cursor:pointer;">
-            🔗 Share This Page
-        </button>
-
+            cursor:pointer;">🔗 Share This Page</button>
     </div>
 """, unsafe_allow_html=True)
 
-
-# === Auto Refresh Every 5 Minutes ===
+# === Auto Refresh ===
 st_autorefresh(interval=300000, key="auto_refresh")
-
 
 # === Logo ===
 st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
@@ -87,13 +79,13 @@ df["Week#"] = df["Date"].dt.isocalendar().week
 df["Reason"] = df["Reason"].astype(str)
 df["Type"] = df["Type"].astype(str)
 
+# === Tabs ===
 tab1, tab2, tab3 = st.tabs(["📊 Dashboard", "📄 Data Table", "📝 New Entry Form"])
 
 # === DASHBOARD TAB ===
 with tab1:
     st.title("📊 Glass Rejection Intelligence Dashboard")
 
-    # Weekly Rejections
     st.markdown("### 📅 Weekly Rejections")
     selected_year = st.radio("Choose Year", sorted(df["Year"].dropna().unique()), horizontal=True)
     df_week = df[df["Year"] == selected_year]
@@ -106,7 +98,6 @@ with tab1:
     )
     st.plotly_chart(fig1, use_container_width=True)
 
-    # Rejections by Reason
     st.markdown("### 🔍 Rejections by Reason")
     reason_year = st.radio("Year", sorted(df["Year"].unique()), horizontal=True, key="reason_year")
     df_reason = df[df["Year"] == reason_year]
@@ -114,7 +105,6 @@ with tab1:
     fig2 = px.bar(reason_data, x="Reason", y="Qty", color="Reason")
     st.plotly_chart(fig2, use_container_width=True)
 
-    # Rejections by Glass Type
     st.markdown("### 🧊 Rejections by Glass Type")
     type_year = st.radio("Year", sorted(df["Year"].unique()), horizontal=True, key="glass_type")
     top_types = df[df["Year"] == type_year]["Type"].value_counts().nlargest(5).index.tolist()
@@ -123,7 +113,6 @@ with tab1:
     fig3 = px.bar(type_data, x="Type", y="Qty", color="Type")
     st.plotly_chart(fig3, use_container_width=True)
 
-    # Rejections by Department
     st.markdown("### 🏭 Rejections by Department")
     valid_quarters = [f"{y}Q{i}" for y in [2024, 2025] for i in range(1, 5) if not (y == 2025 and i > 2)]
     selected_q = st.radio("Select Quarter", valid_quarters, horizontal=True)
@@ -135,7 +124,6 @@ with tab1:
     else:
         st.warning("No data found for the selected quarter.")
 
-    # === Excel Export with Charts ===
     st.markdown("### 📤 Download Excel Report (with charts)")
     if st.button("📥 Generate Excel Report"):
         output = io.BytesIO()
@@ -214,10 +202,6 @@ with tab3:
         try:
             sheet.append_row(new_row)
 
-            import smtplib
-            from email.mime.multipart import MIMEMultipart
-            from email.mime.text import MIMEText
-
             email_conf = st.secrets["email"]
             msg = MIMEMultipart()
             msg['From'] = email_conf["sender"]
@@ -246,4 +230,3 @@ with tab3:
             st.success("✅ Submitted and emailed successfully!")
         except Exception as e:
             st.error(f"❌ Submission failed: {e}")
-
