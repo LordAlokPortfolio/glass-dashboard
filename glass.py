@@ -11,16 +11,23 @@ from streamlit_autorefresh import st_autorefresh
 st.set_page_config(page_title="Glass Rejection Dashboard", layout="wide")
 
 # === Hide Default Streamlit UI ===
+# === Hide all Streamlit default buttons ===
 st.markdown("""
     <style>
-    #MainMenu, footer, button[title="View app source"],
-    button[title="Open app menu"], button[title="Share this app"],
-    a[href*="github.com"], svg[data-testid="icon-pencil"],
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    button[title="View app source"] {display: none !important;}
+    button[title="Open app menu"] {display: none !important;}
+    button[title="Share this app"] {display: none !important;}
+    a[href*="github.com"] {display: none !important;}
+    svg[data-testid="icon-pencil"] {display: none !important;}
     [data-testid="stActionButtonIcon"] svg[data-testid="icon-pencil"] {
         display: none !important;
     }
+    [data-testid="stShareIcon"] {display: none !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 # === Print & Share Buttons ===
 st.markdown("""
