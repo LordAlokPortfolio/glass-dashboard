@@ -56,6 +56,7 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
+
 # === Auto Refresh Every 5 Minutes ===
 st_autorefresh(interval=300000, key="auto_refresh")
 
