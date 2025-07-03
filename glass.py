@@ -41,7 +41,7 @@ df["Week#"] = df["Date"].dt.isocalendar().week
 df["Reason"] = df["Reason"].astype(str)
 df["Type"] = df["Type"].astype(str)
 
-tab1, tab2 = st.tabs(["📊 Dashboard", "📄 Data Table"])
+tab1, tab2, tab3, tab4 = st.tabs(["📊 Dashboard", "📄 Data Table", "🔍 Issue Records", "📝 New Entry Form"])
 
 # === DASHBOARD TAB ===
 with tab1:
@@ -146,3 +146,60 @@ with tab2:
         df_prod = df[(df["Reason"] == "production issue") & (df["Year"] == year_filter2)]
 
         st.dataframe(df_prod.sort_values(by="Date", ascending=False), use_container_width=True, height=500)
+
+        # === NEW ENTRY FORM TAB ===
+with tab4:
+    st.title("📝 New Glass Rejection Entry")
+
+    date = st.date_input("Date")
+    size = st.text_input("Size")
+    thickness = st.number_input("Thickness (mm)", step=0.1)
+    glass_type = st.selectbox("Type", ["Clear", "Lowe", "Tempered", "Tinted"])
+    reason = st.selectbox("Reason", ["Scratched", "Missing", "Broken", "Production Issue", "Other"])
+    qty = st.number_input("Qty", step=1, min_value=1)
+    vendor = st.selectbox("Vendor", ["Cardinal", "Woodbridge", "Other"])
+    so = st.text_input("SO")
+    dept = st.selectbox("Dept.", ["Patio Doors", "Other"])
+
+    # Auto fields
+    month = date.strftime("%B")
+    year = date.year
+    week = date.isocalendar().week
+
+    if st.button("Submit Entry"):
+        new_row = [week, date.strftime("%Y-%m-%d"), month, year, size, thickness, glass_type, reason, qty, vendor, so, dept]
+
+        try:
+            # Append to Google Sheet
+            sheet.append_row(new_row)
+
+            # Send email
+            import smtplib
+            from email.mime.multipart import MIMEMultipart
+            from email.mime.text import MIMEText
+
+            email_conf = st.secrets["email"]
+            msg = MIMEMultipart()
+            msg['From'] = email_conf["sender"]
+            msg['To'] = "ragavan.ramachandran@kvcustomwd.com, ning.ma@kvcustomwd.com"
+            msg['Subject'] = "New Glass Rejection Submitted"
+
+            body = f"""
+            <h4>New Glass Rejection Entry Submitted</h4>
+            <table border='1' cellpadding='5'>
+                <tr><th>Field</th><th>Value</th></tr>
+                {''.join([f"<tr><td>{col}</td><td>{val}</td></tr>" for col, val in zip(df.columns, new_row)])}
+            </table>
+            """
+            msg.attach(MIMEText(body, 'html'))
+
+            server = smtplib.SMTP(email_conf["smtp_server"], email_conf["port"])
+            server.starttls()
+            server.login(email_conf["sender"], email_conf["password"])
+            server.sendmail(email_conf["sender"], msg['To'].split(', '), msg.as_string())
+            server.quit()
+
+            st.success("✅ Submitted and emailed successfully!")
+        except Exception as e:
+            st.error(f"❌ Submission failed: {e}")
+
