@@ -37,7 +37,9 @@ st.markdown("""
             color:white;
             border:none;
             border-radius:6px;
-            cursor:pointer;">🖨️ Print This Page</button>
+            cursor:pointer;">
+            🖨️ Print This Page
+        </button>
 
         <button onclick="navigator.clipboard.writeText(window.location.href); alert('🔗 Page link copied!');" style="
             padding:6px 14px;
@@ -46,8 +48,12 @@ st.markdown("""
             color:white;
             border:none;
             border-radius:6px;
-            cursor:pointer;">🔗 Share This Page</button>
-    </div> """, unsafe_allow_html=True)
+            cursor:pointer;">
+            🔗 Share This Page
+        </button>
+    </div>
+""", unsafe_allow_html=True)
+
 
 # === Auto Refresh ===
 st_autorefresh(interval=300000, key="auto_refresh")
