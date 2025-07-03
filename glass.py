@@ -153,30 +153,31 @@ with tab4:
 
     date = st.date_input("Date")
     size = st.text_input("Size")
-
-    thickness = st.radio("Thickness (mm)", ["3", "4", "5", "6", "Other"], horizontal=True)
+    thickness = st.radio("Thickness (mm)", ["3mm", "4mm", "5mm", "6mm", "Other"], horizontal=True)
     glass_type = st.radio("Glass Type", ["Clear", "Lowe", "Tempered", "Tinted"], horizontal=True)
     reason = st.radio("Reason", ["Broken", "Missing", "Defective", "Production Issue", "Scratched", "Wrong Size", "Other"], horizontal=True)
+    qty = st.number_input("Qty", step=1, min_value=1)
     vendor = st.radio("Vendor", ["Cardinal", "Woodbridge"], horizontal=True)
-    dept = st.radio("Department", ["Patio Doors", "Other"], horizontal=True)
-
+    so = st.text_input("SO")
+    dept = st.radio("Department", ["Patio Door", "Other"], horizontal=True)
 
     # Auto fields
     month = date.strftime("%B")
     year = date.year
-    week = date.isocalendar().week
+    week = float(date.isocalendar().week)  # 27.0
+    formatted_date = date.strftime("%d-%m-%y")  # e.g. 03-07-25
 
     if st.button("Submit Entry"):
         new_row = [
-            str(week),                         # Week# as text to avoid 26-Jan-00
-            date.strftime("%Y-%m-%d"),         # Proper date format
-            month,                             # Already string
-            str(year),                         # Year as string
+            week,
+            formatted_date,
+            month,
+            str(year),
             size,
-            str(thickness),                    # Thickness (radio input, but still safe as string)
+            thickness,
             glass_type,
             reason,
-            str(qty),                          # Qty as string to avoid Excel formatting
+            str(qty),
             vendor,
             so,
             dept
@@ -194,7 +195,11 @@ with tab4:
             email_conf = st.secrets["email"]
             msg = MIMEMultipart()
             msg['From'] = email_conf["sender"]
-            msg['To'] = "ragavan.ramachandran@kvcustomwd.com, ning.ma@kvcustomwd.com", "jonathan.bozanin@kvcustomwd.com"
+            msg['To'] = ", ".join([
+                "ragavan.ramachandran@kvcustomwd.com",
+                "ning.ma@kvcustomwd.com",
+                "jonathan.bozanin@kvcustomwd.com"
+            ])
             msg['Subject'] = "New Glass Rejection Submitted"
 
             body = f"""
@@ -215,6 +220,3 @@ with tab4:
             st.success("✅ Submitted and emailed successfully!")
         except Exception as e:
             st.error(f"❌ Submission failed: {e}")
-
-
-
