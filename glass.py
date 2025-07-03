@@ -25,13 +25,13 @@ st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header {visibility: hidden;}
     button[title="View app source"] {display: none !important;}
     button[title="Open app menu"] {display: none !important;}
     a[href*="github.com"] {display: none !important;}
     svg[data-testid="icon-pencil"] {display: none !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 # Automatically rerun every 5 minutes
