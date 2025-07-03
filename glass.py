@@ -23,14 +23,22 @@ st.markdown("""
 
 st.markdown("""
     <style>
+    /* Hide menu + GitHub + pencil */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
+
+    /* Hide menu and GitHub link */
     button[title="View app source"] {display: none !important;}
     button[title="Open app menu"] {display: none !important;}
     a[href*="github.com"] {display: none !important;}
-    svg[data-testid="icon-pencil"] {display: none !important;}
+
+    /* Hide pencil/edit icon */
+    [data-testid="stActionButtonIcon"] svg[data-testid="icon-pencil"] {
+        display: none !important;
+    }
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
