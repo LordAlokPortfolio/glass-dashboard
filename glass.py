@@ -154,13 +154,12 @@ with tab4:
     date = st.date_input("Date")
     size = st.text_input("Size")
 
-    thickness = st.radio("Thickness (mm)", ["3", "4", "5", "6", "Other"])
-    glass_type = st.radio("Glass Type", ["Clear", "Lowe", "Tempered", "Tinted"])
-    reason = st.radio("Reason", ["Broken", "Missing", "Defective", "Production Issue", "Scratched", "Wrong Size", "Other"])
-    qty = st.number_input("Qty", step=1, min_value=1)
-    vendor = st.radio("Vendor", ["Cardinal", "Woodbridge"])
-    so = st.text_input("SO")
-    dept = st.radio("Department", ["Patio Doors", "Other"])
+    thickness = st.radio("Thickness (mm)", ["3", "4", "5", "6", "Other"], horizontal=True)
+    glass_type = st.radio("Glass Type", ["Clear", "Lowe", "Tempered", "Tinted"], horizontal=True)
+    reason = st.radio("Reason", ["Broken", "Missing", "Defective", "Production Issue", "Scratched", "Wrong Size", "Other"], horizontal=True)
+    vendor = st.radio("Vendor", ["Cardinal", "Woodbridge"], horizontal=True)
+    dept = st.radio("Department", ["Patio Doors", "Other"], horizontal=True)
+
 
     # Auto fields
     month = date.strftime("%B")
