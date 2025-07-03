@@ -29,13 +29,9 @@ st.markdown("""
 
 
 
-# === Print & Share Buttons ===
-st.markdown("""
-    <div style='text-align: right; margin-top: -40px; margin-bottom: 10px; display: flex; justify-content: flex-end; gap: 10px;'>
-        <button onclick="window.print()" style="padding:6px 14px; font-size: 14px; background-color:#f63366; color:white; border:none; border-radius:6px; cursor:pointer;">🖨️ Print This Page</button>
-        <button onclick="navigator.clipboard.writeText(window.location.href); alert('🔗 Page link copied!');" style="padding:6px 14px; font-size: 14px; background-color:#1f77b4; color:white; border:none; border-radius:6px; cursor:pointer;">🔗 Share This Page</button>
-    </div>
-""", unsafe_allow_html=True)
+# === Share Buttons ===
+st.markdown("🔗 To share this dashboard, copy the URL from your browser address bar.", unsafe_allow_html=True)
+
 
 # === Auto Refresh ===
 st_autorefresh(interval=300000, key="auto_refresh")
