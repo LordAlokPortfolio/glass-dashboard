@@ -23,13 +23,18 @@ st.markdown("""
 
 st.markdown("""
     <div style='text-align: right; margin-top: -40px; margin-bottom: 10px;'>
-        <button onclick="window.print()" style="padding:6px 14px; font-size: 14px; background-color:#f63366; color:white; border:none; border-radius:6px; cursor:pointer;'>
+        <button onclick="window.print()" style="
+            padding:6px 14px;
+            font-size: 14px;
+            background-color:#f63366;
+            color:white;
+            border:none;
+            border-radius:6px;
+            cursor:pointer;">
             🖨️ Print Page
         </button>
     </div>
 """, unsafe_allow_html=True)
-
-
 
 # Automatically rerun every 5 minutes
 st_autorefresh(interval=300000, key="auto_refresh")
