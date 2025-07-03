@@ -11,6 +11,26 @@ from streamlit_autorefresh import st_autorefresh
 
 st.set_page_config(page_title="Glass Rejection Dashboard", layout="wide")
 
+# === Hide menu + add Print button ===
+st.markdown("""
+    <style>
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    button[title="View app source"] {display: none;}
+    button[title="Open app menu"] {display: none;}
+    </style>
+""", unsafe_allow_html=True)
+
+st.markdown("""
+    <div style='text-align: right; margin-top: -40px; margin-bottom: 10px;'>
+        <button onclick="window.print()" style="padding:6px 14px; font-size: 14px; background-color:#f63366; color:white; border:none; border-radius:6px; cursor:pointer;'>
+            🖨️ Print Page
+        </button>
+    </div>
+""", unsafe_allow_html=True)
+
+
+
 # Automatically rerun every 5 minutes
 st_autorefresh(interval=300000, key="auto_refresh")
 
@@ -199,3 +219,4 @@ with tab3:
             st.success("✅ Submitted and emailed successfully!")
         except Exception as e:
             st.error(f"❌ Submission failed: {e}")
+
