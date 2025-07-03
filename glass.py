@@ -5,55 +5,30 @@ import io
 from datetime import datetime
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+import time
 from streamlit_autorefresh import st_autorefresh
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 
 st.set_page_config(page_title="Glass Rejection Dashboard", layout="wide")
 
-# === Hide Streamlit default controls ===
+# === Hide Default Streamlit UI ===
 st.markdown("""
     <style>
-    #MainMenu, footer {visibility: hidden;}
-    button[title="View app source"],
-    button[title="Open app menu"],
-    button[title="Share this app"],
-    a[href*="github.com"],
-    svg[data-testid="icon-pencil"],
+    #MainMenu, footer, button[title="View app source"],
+    button[title="Open app menu"], button[title="Share this app"],
+    a[href*="github.com"], svg[data-testid="icon-pencil"],
     [data-testid="stActionButtonIcon"] svg[data-testid="icon-pencil"] {
         display: none !important;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# === Print and Share Buttons ===
+# === Print & Share Buttons ===
 st.markdown("""
     <div style='text-align: right; margin-top: -40px; margin-bottom: 10px; display: flex; justify-content: flex-end; gap: 10px;'>
-        <button onclick="window.print()" style="
-            padding:6px 14px;
-            font-size: 14px;
-            background-color:#f63366;
-            color:white;
-            border:none;
-            border-radius:6px;
-            cursor:pointer;">
-            🖨️ Print This Page
-        </button>
-
-        <button onclick="navigator.clipboard.writeText(window.location.href); alert('🔗 Page link copied!');" style="
-            padding:6px 14px;
-            font-size: 14px;
-            background-color:#1f77b4;
-            color:white;
-            border:none;
-            border-radius:6px;
-            cursor:pointer;">
-            🔗 Share This Page
-        </button>
+        <button onclick="window.print()" style="padding:6px 14px; font-size: 14px; background-color:#f63366; color:white; border:none; border-radius:6px; cursor:pointer;">🖨️ Print This Page</button>
+        <button onclick="navigator.clipboard.writeText(window.location.href); alert('🔗 Page link copied!');" style="padding:6px 14px; font-size: 14px; background-color:#1f77b4; color:white; border:none; border-radius:6px; cursor:pointer;">🔗 Share This Page</button>
     </div>
 """, unsafe_allow_html=True)
-
 
 # === Auto Refresh ===
 st_autorefresh(interval=300000, key="auto_refresh")
@@ -84,7 +59,6 @@ df["Week#"] = df["Date"].dt.isocalendar().week
 df["Reason"] = df["Reason"].astype(str)
 df["Type"] = df["Type"].astype(str)
 
-# === Tabs ===
 tab1, tab2, tab3 = st.tabs(["📊 Dashboard", "📄 Data Table", "📝 New Entry Form"])
 
 # === DASHBOARD TAB ===
@@ -97,25 +71,22 @@ with tab1:
     weekly = df_week.groupby("Week#")["Qty"].sum().reset_index()
     fig1 = px.line(weekly, x="Week#", y="Qty", markers=True)
     fig1.update_layout(
-        xaxis=dict(tickmode="linear", tick0=1, dtick=3, tickvals=list(range(1, 53))),
-        shapes=[dict(type="line", x0=w, x1=w, yref="paper", y0=0, y1=1,
-                     line=dict(color="cyan", width=2, dash="dot")) for w in [13, 26, 39, 52]]
+        xaxis=dict(tickmode="linear", tick0=1, dtick=3),
+        shapes=[dict(type="line", x0=w, x1=w, yref="paper", y0=0, y1=1, line=dict(color="cyan", width=2, dash="dot")) for w in [13, 26, 39, 52]]
     )
     st.plotly_chart(fig1, use_container_width=True)
 
     st.markdown("### 🔍 Rejections by Reason")
     reason_year = st.radio("Year", sorted(df["Year"].unique()), horizontal=True, key="reason_year")
     df_reason = df[df["Year"] == reason_year]
-    reason_data = df_reason.groupby("Reason")["Qty"].sum().reset_index()
-    fig2 = px.bar(reason_data, x="Reason", y="Qty", color="Reason")
+    fig2 = px.bar(df_reason.groupby("Reason")["Qty"].sum().reset_index(), x="Reason", y="Qty", color="Reason")
     st.plotly_chart(fig2, use_container_width=True)
 
     st.markdown("### 🧊 Rejections by Glass Type")
     type_year = st.radio("Year", sorted(df["Year"].unique()), horizontal=True, key="glass_type")
     top_types = df[df["Year"] == type_year]["Type"].value_counts().nlargest(5).index.tolist()
     df_type = df[(df["Year"] == type_year) & (df["Type"].isin(top_types))]
-    type_data = df_type.groupby("Type")["Qty"].sum().reset_index()
-    fig3 = px.bar(type_data, x="Type", y="Qty", color="Type")
+    fig3 = px.bar(df_type.groupby("Type")["Qty"].sum().reset_index(), x="Type", y="Qty", color="Type")
     st.plotly_chart(fig3, use_container_width=True)
 
     st.markdown("### 🏭 Rejections by Department")
@@ -123,8 +94,7 @@ with tab1:
     selected_q = st.radio("Select Quarter", valid_quarters, horizontal=True)
     df_q = df[df["Quarter"] == selected_q]
     if not df_q.empty:
-        dept_data = df_q.groupby("Dept.")["Qty"].sum().reset_index()
-        fig4 = px.pie(dept_data, names="Dept.", values="Qty", hole=0.4)
+        fig4 = px.pie(df_q.groupby("Dept.")["Qty"].sum().reset_index(), names="Dept.", values="Qty", hole=0.4)
         st.plotly_chart(fig4, use_container_width=True)
     else:
         st.warning("No data found for the selected quarter.")
@@ -135,10 +105,9 @@ with tab1:
         with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
             df.to_excel(writer, sheet_name="AllData", index=False)
             workbook = writer.book
-            ws_data = writer.sheets["AllData"]
             ws_charts = workbook.add_worksheet("Charts")
 
-            def create_chart(chart_type, title, category_col, value_col, position):
+            def create_chart(chart_type, title, category_col, value_col, pos):
                 chart = workbook.add_chart({'type': chart_type})
                 chart.add_series({
                     'name': title,
@@ -147,32 +116,24 @@ with tab1:
                 })
                 chart.set_title({'name': title})
                 chart.set_style(10)
-                ws_charts.insert_chart(position, chart)
+                ws_charts.insert_chart(pos, chart)
 
             col_map = {col: i for i, col in enumerate(df.columns)}
-            df["Week#"] = df["Date"].dt.isocalendar().week
             create_chart('column', 'Weekly Rejections', col_map["Week#"], col_map["Qty"], "A1")
             create_chart('bar', 'Rejections by Reason', col_map["Reason"], col_map["Qty"], "A20")
             create_chart('bar', 'Rejections by Glass Type', col_map["Type"], col_map["Qty"], "A39")
             create_chart('pie', 'Rejections by Department', col_map["Dept."], col_map["Qty"], "A58")
 
-        st.download_button(
-            label="📥 Download Excel with Charts",
-            data=output.getvalue(),
-            file_name="Rejection_Report_With_Charts.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+        st.download_button("📥 Download Excel with Charts", data=output.getvalue(), file_name="Rejection_Report_With_Charts.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 # === DATA TABLE TAB ===
 with tab2:
     st.title("📄 All Rejection Records")
-    df_table = df.sort_values(by="Date", ascending=False)
-    st.dataframe(df_table, use_container_width=True, height=600)
+    st.dataframe(df.sort_values(by="Date", ascending=False), use_container_width=True, height=600)
 
 # === NEW ENTRY FORM TAB ===
 with tab3:
     st.title("📝 New Glass Rejection Entry")
-
     date = st.date_input("Date")
     size = st.text_input("Size")
     thickness = st.radio("Thickness (mm)", ["3mm", "4mm", "5mm", "6mm", "Other"], horizontal=True)
@@ -189,23 +150,13 @@ with tab3:
     formatted_date = date.strftime("%d-%m-%y")
 
     if st.button("Submit Entry"):
-        new_row = [
-            week,
-            formatted_date,
-            month,
-            str(year),
-            size,
-            thickness,
-            glass_type,
-            reason,
-            str(qty),
-            vendor,
-            so,
-            dept
-        ]
-
+        new_row = [week, formatted_date, month, str(year), size, thickness, glass_type, reason, str(qty), vendor, so, dept]
         try:
             sheet.append_row(new_row)
+
+            import smtplib
+            from email.mime.multipart import MIMEMultipart
+            from email.mime.text import MIMEText
 
             email_conf = st.secrets["email"]
             msg = MIMEMultipart()
