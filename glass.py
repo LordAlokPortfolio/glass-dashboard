@@ -22,19 +22,17 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown("""
-    <div style='text-align: right; margin-top: -40px; margin-bottom: 10px;'>
-        <button onclick="window.print()" style="
-            padding:6px 14px;
-            font-size: 14px;
-            background-color:#f63366;
-            color:white;
-            border:none;
-            border-radius:6px;
-            cursor:pointer;">
-            🖨️ Print Page
-        </button>
-    </div>
+    <style>
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    button[title="View app source"] {display: none !important;}
+    button[title="Open app menu"] {display: none !important;}
+    a[href*="github.com"] {display: none !important;}
+    svg[data-testid="icon-pencil"] {display: none !important;}
+    </style>
 """, unsafe_allow_html=True)
+
 
 # Automatically rerun every 5 minutes
 st_autorefresh(interval=300000, key="auto_refresh")
