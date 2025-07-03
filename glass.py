@@ -194,7 +194,7 @@ with tab4:
             email_conf = st.secrets["email"]
             msg = MIMEMultipart()
             msg['From'] = email_conf["sender"]
-            msg['To'] = "ragavan.ramachandran@kvcustomwd.com, ning.ma@kvcustomwd.com"
+            msg['To'] = "ragavan.ramachandran@kvcustomwd.com, ning.ma@kvcustomwd.com", "jonathan.bozanin@kvcustomwd.com"
             msg['Subject'] = "New Glass Rejection Submitted"
 
             body = f"""
