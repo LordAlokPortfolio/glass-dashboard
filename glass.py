@@ -7,41 +7,35 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import time
 from streamlit_autorefresh import st_autorefresh
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 st.set_page_config(page_title="Glass Rejection Dashboard", layout="wide")
 
-# === Hide Default Streamlit UI ===
+# === Hide Streamlit UI ===
 st.markdown("""
     <style>
-    /* Hide default Streamlit top-right icons */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-
-    /* Hide GitHub and edit/pencil icons */
-    a[href^="https://github.com"] {display: none !important;}
-    button[title="View app source"] {display: none !important;}
-    button[title="Open app menu"] {display: none !important;}
-    svg[data-testid="icon-pencil"] {display: none !important;}
-    [data-testid="stActionButtonIcon"] svg[data-testid="icon-pencil"] {display: none !important;}
+    #MainMenu, footer, header {visibility: hidden;}
+    a[href^="https://github.com"],
+    button[title="View app source"],
+    button[title="Open app menu"],
+    svg[data-testid="icon-pencil"],
+    [data-testid="stActionButtonIcon"] svg[data-testid="icon-pencil"] {
+        display: none !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
-
-
-# === Share Buttons ===
-st.markdown("🔗 To share this dashboard, copy the URL from your browser address bar.", unsafe_allow_html=True)
-
-
 # === Auto Refresh ===
-st_autorefresh(interval=300000, key="auto_refresh")
+st_autorefresh(interval=300000, key="auto_refresh")  # every 5 minutes
 
 # === Logo ===
 st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 st.image("KV-Logo-1.png", width=150)
 st.markdown("</div>", unsafe_allow_html=True)
 
-# === Load Data from Google Sheet ===
+# === Load Google Sheet ===
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 creds_dict = st.secrets["google_service_account"]
 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
@@ -59,12 +53,12 @@ df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
 df["Year"] = df["Date"].dt.year
 df["Quarter"] = df["Date"].dt.to_period("Q").astype(str)
 df["Week#"] = df["Date"].dt.isocalendar().week
-df["Reason"] = df["Reason"].astype(str)
+df["Reason"] = df["Reason"].astype(str).str.strip().str.lower()
 df["Type"] = df["Type"].astype(str)
 
 tab1, tab2, tab3 = st.tabs(["📊 Dashboard", "📄 Data Table", "📝 New Entry Form"])
 
-# === DASHBOARD TAB ===
+# === DASHBOARD ===
 with tab1:
     st.title("📊 Glass Rejection Intelligence Dashboard")
 
@@ -74,8 +68,9 @@ with tab1:
     weekly = df_week.groupby("Week#")["Qty"].sum().reset_index()
     fig1 = px.line(weekly, x="Week#", y="Qty", markers=True)
     fig1.update_layout(
-        xaxis=dict(tickmode="linear", tick0=1, dtick=3),
-        shapes=[dict(type="line", x0=w, x1=w, yref="paper", y0=0, y1=1, line=dict(color="cyan", width=2, dash="dot")) for w in [13, 26, 39, 52]]
+        xaxis=dict(tickmode="linear", dtick=3),
+        shapes=[dict(type="line", x0=w, x1=w, yref="paper", y0=0, y1=1,
+                     line=dict(color="cyan", width=2, dash="dot")) for w in [13, 26, 39, 52]]
     )
     st.plotly_chart(fig1, use_container_width=True)
 
@@ -102,39 +97,25 @@ with tab1:
     else:
         st.warning("No data found for the selected quarter.")
 
-    st.markdown("### 📤 Download Excel Report (with charts)")
-    if st.button("📥 Generate Excel Report"):
-        output = io.BytesIO()
-        with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-            df.to_excel(writer, sheet_name="AllData", index=False)
-            workbook = writer.book
-            ws_charts = workbook.add_worksheet("Charts")
-
-            def create_chart(chart_type, title, category_col, value_col, pos):
-                chart = workbook.add_chart({'type': chart_type})
-                chart.add_series({
-                    'name': title,
-                    'categories': ['AllData', 1, category_col, len(df), category_col],
-                    'values': ['AllData', 1, value_col, len(df), value_col],
-                })
-                chart.set_title({'name': title})
-                chart.set_style(10)
-                ws_charts.insert_chart(pos, chart)
-
-            col_map = {col: i for i, col in enumerate(df.columns)}
-            create_chart('column', 'Weekly Rejections', col_map["Week#"], col_map["Qty"], "A1")
-            create_chart('bar', 'Rejections by Reason', col_map["Reason"], col_map["Qty"], "A20")
-            create_chart('bar', 'Rejections by Glass Type', col_map["Type"], col_map["Qty"], "A39")
-            create_chart('pie', 'Rejections by Department', col_map["Dept."], col_map["Qty"], "A58")
-
-        st.download_button("📥 Download Excel with Charts", data=output.getvalue(), file_name="Rejection_Report_With_Charts.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-
-# === DATA TABLE TAB ===
+# === DATA TABLE ===
 with tab2:
-    st.title("📄 All Rejection Records")
-    st.dataframe(df.sort_values(by="Date", ascending=False), use_container_width=True, height=600)
+    tab_data1, tab_data2 = st.tabs(["🟦 Scratched Glass Records", "🟥 Production Issue Records"])
 
-# === NEW ENTRY FORM TAB ===
+    with tab_data1:
+        st.markdown("### 🟦 Scratched Glass Records")
+        selected_year = st.radio("Select Year", sorted(df["Year"].unique(), reverse=True), horizontal=True, key="scratch_year")
+        df_scratch = df[(df["Reason"] == "scratched") & (df["Year"] == selected_year)]
+        st.metric("Total Qty", int(df_scratch["Qty"].sum()))
+        st.dataframe(df_scratch.sort_values(by="Date", ascending=False), use_container_width=True, height=500)
+
+    with tab_data2:
+        st.markdown("### 🟥 Production Issue Records")
+        selected_year = st.radio("Select Year", sorted(df["Year"].unique(), reverse=True), horizontal=True, key="prod_year")
+        df_prod = df[(df["Reason"] == "production issue") & (df["Year"] == selected_year)]
+        st.metric("Total Qty", int(df_prod["Qty"].sum()))
+        st.dataframe(df_prod.sort_values(by="Date", ascending=False), use_container_width=True, height=500)
+
+# === ENTRY FORM ===
 with tab3:
     st.title("📝 New Glass Rejection Entry")
     date = st.date_input("Date")
@@ -157,13 +138,8 @@ with tab3:
         try:
             sheet.append_row(new_row)
 
-            import smtplib
-            from email.mime.multipart import MIMEMultipart
-            from email.mime.text import MIMEText
-
-            email_conf = st.secrets["email"]
             msg = MIMEMultipart()
-            msg['From'] = email_conf["sender"]
+            msg['From'] = st.secrets["email"]["sender"]
             msg['To'] = ", ".join([
                 "ragavan.ramachandran@kvcustomwd.com",
                 "ning.ma@kvcustomwd.com",
@@ -180,10 +156,10 @@ with tab3:
             """
             msg.attach(MIMEText(body, 'html'))
 
-            server = smtplib.SMTP(email_conf["smtp_server"], email_conf["port"])
+            server = smtplib.SMTP(st.secrets["email"]["smtp_server"], st.secrets["email"]["port"])
             server.starttls()
-            server.login(email_conf["sender"], email_conf["password"])
-            server.sendmail(email_conf["sender"], msg['To'].split(', '), msg.as_string())
+            server.login(st.secrets["email"]["sender"], st.secrets["email"]["password"])
+            server.sendmail(st.secrets["email"]["sender"], msg['To'].split(', '), msg.as_string())
             server.quit()
 
             st.success("✅ Submitted and emailed successfully!")
